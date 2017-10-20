@@ -37,9 +37,9 @@
     </description>
 
     <scm>
-        <connection>scm:svn:http://svn.apache.org/repos/asf/sling/trunk/contrib/extensions/resourcemerger</connection>
-        <developerConnection>scm:svn:https://svn.apache.org/repos/asf/sling/trunk/contrib/extensions/resourcemerger</developerConnection>
-        <url>http://svn.apache.org/viewvc/sling/trunk/contrib/extensions/resourcemerger</url>
+        <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-resourcemerger.git</conncetion>
+        <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-resourcemerger.git</developerConnection>
+        <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-resourcemerger.git</url>
     </scm>
 
     <build>
