@@ -402,12 +402,20 @@ public class CommonMergedResourceProviderTest {
         MockHelper.create(this.resolver)
             .resource("/apps/base/child1")
             .resource("/apps/base/child2")
-            .resource("/apps/overlay/child3").p(MergedResourceConstants.PN_ORDER_BEFORE, "child2")
+            .resource("/apps/base/child3")
+            .resource("/apps/base/child4")
+            .resource("/apps/overlay/child5").p(MergedResourceConstants.PN_ORDER_BEFORE, "child2")
+            .resource("/apps/overlay/child6").p(MergedResourceConstants.PN_ORDER_BEFORE, "child2")
+            .resource("/apps/overlay/child7").p(MergedResourceConstants.PN_ORDER_BEFORE, "child4")
+            .resource("/apps/overlay/child8").p(MergedResourceConstants.PN_ORDER_BEFORE, "child3")
+            .resource("/apps/overlay/child9").p(MergedResourceConstants.PN_ORDER_BEFORE, "child3")
+            .resource("/apps/overlay/child10")
+            .resource("/apps/overlay/child3")
             .commit();
         Resource mergedResource = this.provider.getResource(ctx, "/merged", ResourceContext.EMPTY_CONTEXT, null);
         // convert the iterator returned by list children into an iterable (to be able to perform some tests)
         IteratorIterable<Resource> iterable = new IteratorIterable<Resource>(provider.listChildren(ctx, mergedResource), true);
         
-        Assert.assertThat(iterable, Matchers.contains(ResourceMatchers.name("child1"),ResourceMatchers.name("child3"), ResourceMatchers.name("child2")));
+        Assert.assertThat(iterable, Matchers.contains(ResourceMatchers.name("child1"),ResourceMatchers.name("child5"), ResourceMatchers.name("child6"), ResourceMatchers.name("child2"), ResourceMatchers.name("child8"),ResourceMatchers.name("child9"), ResourceMatchers.name("child7"),ResourceMatchers.name("child4"),ResourceMatchers.name("child10"),ResourceMatchers.name("child3")));
     }
 }
