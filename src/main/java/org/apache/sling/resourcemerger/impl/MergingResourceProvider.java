@@ -378,7 +378,6 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
                     if (orderBeforeIndex > -1) {
                         candidates.add(orderBeforeIndex, holder);
                         candidates.remove(candidates.size() - 1);
-                        previousChildPositionInCandidateList = orderBeforeIndex;
                     } else {
                         // or reorder because overlaid resource has a different order
                         if (childPositionInCandidateList != -1 && previousChildPositionInCandidateList != -1) {
