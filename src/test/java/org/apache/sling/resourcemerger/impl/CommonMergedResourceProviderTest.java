@@ -343,7 +343,8 @@ public class CommonMergedResourceProviderTest {
         
         Assert.assertThat(iterable, Matchers.contains(ResourceMatchers.name("child5"),ResourceMatchers.name("child2"), ResourceMatchers.name("child3"), ResourceMatchers.name("child4"),ResourceMatchers.name("child1")));
     }
-    
+
+
     @Test
     public void testOrderOfNonOverlappingChildren() throws PersistenceException {
         // create new child nodes below base and overlay
@@ -417,5 +418,24 @@ public class CommonMergedResourceProviderTest {
         IteratorIterable<Resource> iterable = new IteratorIterable<Resource>(provider.listChildren(ctx, mergedResource), true);
         
         Assert.assertThat(iterable, Matchers.contains(ResourceMatchers.name("child1"),ResourceMatchers.name("child5"), ResourceMatchers.name("child6"), ResourceMatchers.name("child2"), ResourceMatchers.name("child8"),ResourceMatchers.name("child9"), ResourceMatchers.name("child7"),ResourceMatchers.name("child4"),ResourceMatchers.name("child10"),ResourceMatchers.name("child3")));
+    }
+
+    @Test
+    public void testOrderBeingModifiedThroughOrderBeforeAndFullyOverlappingChildren() throws PersistenceException {
+
+        // create new child nodes below base and overlay
+        MockHelper.create(this.resolver)
+                .resource("/apps/base/child1")
+                .resource("/apps/base/child2")
+                .resource("/apps/overlay/child1")
+                .resource("/apps/overlay/child3").p(MergedResourceConstants.PN_ORDER_BEFORE, "child2")
+                .resource("/apps/overlay/child2")
+                .commit();
+
+        Resource mergedResource = this.provider.getResource(ctx, "/merged", ResourceContext.EMPTY_CONTEXT, null);
+        // convert the iterator returned by list children into an iterable (to be able to perform some tests)
+        IteratorIterable<Resource> iterable = new IteratorIterable<Resource>(provider.listChildren(ctx, mergedResource), true);
+
+        Assert.assertThat(iterable, Matchers.contains(ResourceMatchers.name("child1"),ResourceMatchers.name("child3"),ResourceMatchers.name("child2")));
     }
 }

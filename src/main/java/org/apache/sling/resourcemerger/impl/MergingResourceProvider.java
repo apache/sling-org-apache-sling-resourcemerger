@@ -385,7 +385,11 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
                             if (childPositionInCandidateList < previousChildPositionInCandidateList) {
                                 previousChildPositionInCandidateList--;
                             }
-                            candidates.add(previousChildPositionInCandidateList+1, holder);
+                            if(previousChildPositionInCandidateList+1 > candidates.size()){
+                                candidates.add(holder);
+                            } else {
+                                candidates.add(previousChildPositionInCandidateList + 1, holder);
+                            }
                             previousChildPositionInCandidateList++;
                         }
                     }
