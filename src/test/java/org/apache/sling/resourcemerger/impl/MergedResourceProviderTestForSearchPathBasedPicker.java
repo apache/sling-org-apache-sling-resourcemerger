@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.collections4.iterators.IteratorIterable;
 import org.apache.sling.api.resource.ModifiableValueMap;
 import org.apache.sling.api.resource.PersistenceException;
 import org.apache.sling.api.resource.Resource;
@@ -35,12 +36,15 @@ import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceResolverFactory;
 import org.apache.sling.api.resource.ResourceUtil;
 import org.apache.sling.api.resource.ValueMap;
+import org.apache.sling.hamcrest.ResourceMatchers;
 import org.apache.sling.resourcemerger.impl.picker.SearchPathBasedResourcePicker;
 import org.apache.sling.spi.resource.provider.ResolveContext;
 import org.apache.sling.spi.resource.provider.ResourceContext;
 import org.apache.sling.testing.resourceresolver.MockHelper;
 import org.apache.sling.testing.resourceresolver.MockResourceResolverFactory;
 import org.apache.sling.testing.resourceresolver.MockResourceResolverFactoryOptions;
+import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -342,4 +346,25 @@ public class MergedResourceProviderTestForSearchPathBasedPicker {
         }
     }
 
+    @Test
+    public void testOrderBefore() throws PersistenceException {
+        // create new child nodes below base and overlay
+        MockHelper.create(this.resolver).resource("/libs/orderbeforetest").resource("/apps/orderbeforetest")
+                .resource("/libs/orderbeforetest/create").resource("/libs/orderbeforetest/edit")
+                .resource("/libs/orderbeforetest/update").resource("/libs/orderbeforetest/delete")
+                .resource("/libs/orderbeforetest/rollout").resource("/apps/orderbeforetest/move")
+                .resource("/apps/orderbeforetest/create").p(MergedResourceConstants.PN_ORDER_BEFORE, "edit").commit();
+
+        Resource mergedResource = this.provider.getResource(ctx, "/merged/orderbeforetest",
+                ResourceContext.EMPTY_CONTEXT, null);
+        // convert the iterator returned by list children into an iterable (to be able
+        // to perform some tests)
+        IteratorIterable<Resource> iterable = new IteratorIterable<Resource>(provider.listChildren(ctx, mergedResource),
+                true);
+
+        Assert.assertThat(iterable,
+                Matchers.contains(ResourceMatchers.name("create"), ResourceMatchers.name("edit"),
+                        ResourceMatchers.name("update"), ResourceMatchers.name("delete"),
+                        ResourceMatchers.name("rollout"), ResourceMatchers.name("move")));
+    }
 }

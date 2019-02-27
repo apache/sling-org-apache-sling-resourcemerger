@@ -81,7 +81,7 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
         private List<ExcludeEntry> entries = new ArrayList<ExcludeEntry>();
 
         /**
-         * 
+         *
          * @param parent the underlying resource
          * @param traverseParent if true will also continue with the parent's parent recursively
          */
@@ -135,7 +135,7 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
         }
 
         /**
-         * 
+         *
          * @param name the name of the resource to check
          * @param isLocalResource {@code true} if the check is on a local resource, {@code false} if the check is on an underlying/inherited resource
          * @return {@code true} if the local/inherited resource should be hidden, otherwise {@code false}
@@ -301,7 +301,7 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
             final List<ResourceHolder> candidates = new ArrayList<ResourceHolder>();
 
             final Iterator<Resource> resources = picker.pickResources(resolver, relativePath, parent).iterator();
-            
+
             // start with the base resource
             boolean isUnderlying = true;
             while (resources.hasNext()) {
@@ -319,16 +319,16 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
                         }
                     }
                 }
-                
+
                 int previousChildPositionInCandidateList = -1;
-                
+
                 // get children of current resource (might be overlaid resource)
                 for (final Resource child : parentResource.getChildren()) {
                     final String rsrcName = child.getName();
                     // the holder which should end up in the children list
                     ResourceHolder holder = null;
                     int childPositionInCandidateList = -1;
-                    
+
                     // check if this an overlaid resource (i.e. has the resource with the same name already be exposed through the underlying resource)
                     for (int index=0; index < candidates.size(); index++) {
                         ResourceHolder current = candidates.get(index);
@@ -377,7 +377,14 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
                     // either reorder because of explicit reording property
                     if (orderBeforeIndex > -1) {
                         candidates.add(orderBeforeIndex, holder);
-                        candidates.remove(candidates.size() - 1);
+                        if (childPositionInCandidateList == -1) {
+                            candidates.remove(candidates.size() - 1);
+                        } else {
+                            if (childPositionInCandidateList > orderBeforeIndex) {
+                                childPositionInCandidateList++;
+                            }
+                            candidates.remove(childPositionInCandidateList);
+                        }
                     } else {
                         // or reorder because overlaid resource has a different order
                         if (childPositionInCandidateList != -1 && previousChildPositionInCandidateList != -1) {
@@ -394,7 +401,7 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
                         }
                     }
                 }
-                
+
             }
             final List<Resource> children = new ArrayList<Resource>();
             for (final ResourceHolder holder : candidates) {
