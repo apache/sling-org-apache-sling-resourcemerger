@@ -441,7 +441,7 @@ public class CommonMergedResourceProviderTest {
     }
 
     @Test
-    public void testNodesDefinedInBaseStructureShouldBeReflectedInOverlayedStructureWhenNotExcludedInCombinationWithWildcard() throws PersistenceException {
+    public void testNodesDefinedInBaseStructureShouldBeReflectedInOverlaidStructureWhenNotExcludedInCombinationWithWildcard() throws PersistenceException {
         final String title = "title";
         final String field = "field";
         final String description = "description";

@@ -159,11 +159,11 @@ public class MergedResourceProviderTestForSearchPathBasedPicker {
     }
 
     @Test public void testResourceType() {
-        // a/2 defines the property and it's overlayed
+        // a/2 defines the property and it's overlaid
         final Resource rsrcA2 = this.provider.getResource(ctx, "/merged/a/2", ResourceContext.EMPTY_CONTEXT, null);
         assertEquals("apps", rsrcA2.getResourceType());
 
-        // a/12 doesn't define the property and it's overlayed
+        // a/12 doesn't define the property and it's overlaid
         final Resource rsrcA1 = this.provider.getResource(ctx, "/merged/a/1", ResourceContext.EMPTY_CONTEXT, null);
         assertEquals("a/1", rsrcA1.getResourceType());
 

@@ -19,9 +19,11 @@
 package org.apache.sling.resourcemerger.impl;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import com.sun.tools.javac.util.ArrayUtils;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.api.resource.ResourceUtil;
@@ -110,17 +112,14 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
                     final String[] ancestorChildrenToHideArray = ancestorProps.get(MergedResourceConstants.PN_HIDE_CHILDREN, String[].class);
                     if (ancestorChildrenToHideArray != null) {
                         for (final String value : ancestorChildrenToHideArray) {
-                            final boolean onlyUnderlying;
-                            if (value.equals("*")) {
-                                onlyUnderlying = true;
-                            } else {
-                                onlyUnderlying = false;
-                            }
+                            final boolean onlyUnderlying = value.equals("*");
                             final ExcludeEntry entry = new ExcludeEntry(value, onlyUnderlying);
                             // check if this entry is applicable at all (always assuming the worst case, i.e. non local resource)
                             final Boolean hides = hides(entry, previousAncestorName, false);
-                            if (hides != null && hides.booleanValue() == true) {
-                                this.entries.add(new ExcludeEntry("*", entry.onlyUnderlying));
+                            if (hides != null) {
+                                if (Boolean.TRUE.equals(hides)) {
+                                    this.entries.add(new ExcludeEntry("*", entry.onlyUnderlying));
+                                }
                                 break;
                             }
                         }
