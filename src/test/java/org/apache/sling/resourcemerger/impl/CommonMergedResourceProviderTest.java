@@ -187,14 +187,13 @@ public class CommonMergedResourceProviderTest {
                 ResourceMatchers.name("child2"),
                 ResourceMatchers.name("child3")));
         
-        // now hide by negated value (hide all underlying children except for the one with name child2)
+        // now hide by negated value (hide all children except for the one with name child2)
         properties.put(MergedResourceConstants.PN_HIDE_CHILDREN, new String[]{"!child2", "*", "child3"});
         resolver.commit();
         
         iterableChildren = new IteratorIterable<Resource>(provider.listChildren(ctx, mergedResource), true);
         Assert.assertThat(iterableChildren, Matchers.containsInAnyOrder(
-                ResourceMatchers.name("child2"), 
-                ResourceMatchers.nameAndProps("child1", Collections.singletonMap("property1", (Object)"fromoverlay"))
+                ResourceMatchers.name("child2")
         ));
     }
 
