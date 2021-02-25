@@ -57,6 +57,11 @@
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <extensions>true</extensions>
+                <configuration>
+                    <instructions>
+                        <Sling-Nodetypes>SLING-INF/nodetypes/resourcemerger.cnd</Sling-Nodetypes>
+                    </instructions>
+                </configuration>
             </plugin>
         </plugins>
     </build>
