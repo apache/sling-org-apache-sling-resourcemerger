@@ -51,86 +51,52 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
         this.traverseHierarchie = traverseHierarchie;
     }
 
-    protected static final class ExcludeEntry {
-
-        public final String name;
-        public final boolean exclude;
-        public final boolean onlyUnderlying; // if only underlying resources should be affected (and not the local ones)
-
-        public ExcludeEntry(final String value, boolean onlyUnderlying) {
-            this.onlyUnderlying = onlyUnderlying;
-            if ( value.startsWith("!!") ) {
-                this.name = value.substring(1);
-                this.exclude = false;
-            } else if ( value.startsWith("!") ) {
-                this.name = value.substring(1);
-                this.exclude = true;
-            } else {
-                this.name = value;
-                this.exclude = false;
-            }
-        }
-    }
-
     /**
      * Class to check whether a child resource must be hidden. It should not be instantiated for the underlying resource
      * tree (which is /libs by default) because this check is expensive.
      */
-    protected static final class ParentHidingHandler {
+    protected static final class ResourceHidingHandler {
 
-        private List<ExcludeEntry> entries = new ArrayList<ExcludeEntry>();
+        private boolean isParentHiddenFully;
+        private boolean isParentHiddenForUnderlay;
+        private final HideItemPredicate hidePredicate;
 
         /**
          *
-         * @param parent the underlying resource
+         * @param resource the underlying resource
          * @param traverseParent if true will also continue with the parent's parent recursively
          */
-        public ParentHidingHandler(final Resource parent, final boolean traverseParent) {
+        public ResourceHidingHandler(final Resource resource, final boolean traverseParent) {
+            isParentHiddenFully = false;
+            isParentHiddenForUnderlay = false;
             // evaluate the sling:hideChildren property on the current resource
-            final ValueMap parentProps = parent.getValueMap();
-            final String[] childrenToHideArray = parentProps.get(MergedResourceConstants.PN_HIDE_CHILDREN, String[].class);
-            if (childrenToHideArray != null) {
-                for (final String value : childrenToHideArray) {
-                    final boolean onlyUnderlying;
-                    if (value.equals("*")) {
-                        onlyUnderlying = true;
-                    } else {
-                        onlyUnderlying = false;
-                    }
-                    final ExcludeEntry entry = new ExcludeEntry(value, onlyUnderlying);
-                    this.entries.add(entry);
-                }
-            }
+            final ValueMap properties = resource.getValueMap();
+            final String[] childrenToHideArray = properties.get(MergedResourceConstants.PN_HIDE_CHILDREN, new String[0]);
+            hidePredicate = new HideItemPredicate(childrenToHideArray, resource.getPath() + "/" + MergedResourceConstants.PN_HIDE_CHILDREN);
+            
             // also check on the parent's parent whether that was hiding the parent
-            if (parent != null) {
-                Resource ancestor = parent.getParent();
-                String previousAncestorName = parent.getName();
-                while (ancestor != null) {
-                    final ValueMap ancestorProps = ancestor.getValueMap();
-                    final String[] ancestorChildrenToHideArray = ancestorProps.get(MergedResourceConstants.PN_HIDE_CHILDREN, String[].class);
-                    if (ancestorChildrenToHideArray != null) {
-                        for (final String value : ancestorChildrenToHideArray) {
-                            final boolean onlyUnderlying;
-                            if (value.equals("*")) {
-                                onlyUnderlying = true;
-                            } else {
-                                onlyUnderlying = false;
-                            }
-                            final ExcludeEntry entry = new ExcludeEntry(value, onlyUnderlying);
-                            // check if this entry is applicable at all (always assuming the worst case, i.e. non local resource)
-                            final Boolean hides = hides(entry, previousAncestorName, false);
-                            if (hides != null && hides.booleanValue() == true) {
-                                this.entries.add(new ExcludeEntry("*", entry.onlyUnderlying));
-                                break;
-                            }
+            Resource parent = resource.getParent();
+            String childResourceName = resource.getName();
+            while (parent != null) {
+                final ValueMap parentProperties = parent.getValueMap();
+                final String[] parentChildrenToHideArray = parentProperties.get(MergedResourceConstants.PN_HIDE_CHILDREN, String[].class);
+                if (parentChildrenToHideArray != null) {
+                    HideItemPredicate parentHidePredicate = new HideItemPredicate(parentChildrenToHideArray, parent.getPath() + "/" + MergedResourceConstants.PN_HIDE_CHILDREN);
+                    // check if this parentHidePredicate is applicable at all (always assuming the worst case, i.e. non local resource)
+                    if (parentHidePredicate.testItem(childResourceName, false)) {
+                        if (parentHidePredicate.isWildcard()) {
+                            isParentHiddenForUnderlay = true;
+                        } else {
+                            isParentHiddenFully = true;
                         }
-                    }
-                    if ( !traverseParent ) {
                         break;
                     }
-                    previousAncestorName = ancestor.getName();
-                    ancestor = ancestor.getParent();
                 }
+                if (!traverseParent) {
+                    break;
+                }
+                childResourceName = parent.getName();
+                parent = parent.getParent();
             }
         }
 
@@ -141,40 +107,15 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
          * @return {@code true} if the local/inherited resource should be hidden, otherwise {@code false}
          */
         public boolean isHidden(final String name, boolean isLocalResource) {
-            boolean hidden = false;
-            if ( this.entries != null ) {
-                for(final ExcludeEntry entry : this.entries) {
-                    Boolean result = hides(entry, name, isLocalResource);
-                    if (result != null) {
-                        hidden = result.booleanValue();
-                        break;
-                    }
-                }
-            }
-            return hidden;
-        }
-
-        /**
-         * Determine if an entry should hide the named resource.
-         *
-         * @return a non-null value if the entry matches; a null value if it does not
-         */
-        private Boolean hides(final ExcludeEntry entry, final String name, boolean isLocalResource) {
-            Boolean result = null;
-            if (entry.name.equals("*") || entry.name.equals(name)) {
-                if ((isLocalResource && !entry.onlyUnderlying) || !isLocalResource) {
-                    result = Boolean.valueOf(!entry.exclude);
-                }
-            }
-            return result;
+            return isParentHiddenFully || ((!isLocalResource) && isParentHiddenForUnderlay) || (hidePredicate.testItem(name, isLocalResource));
         }
 
     }
 
     protected static final class ResourceHolder {
         public final String name;
-        public final List<Resource> resources = new ArrayList<Resource>();
-        public final List<ValueMap> valueMaps = new ArrayList<ValueMap>();
+        public final List<Resource> resources = new ArrayList<>();
+        public final List<ValueMap> valueMaps = new ArrayList<>();
 
         public ResourceHolder(final String n) {
             this.name = n;
@@ -270,7 +211,7 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
                     // check parent for hiding
                     // SLING-3521 : if parent is not readable, nothing is hidden
                     final Resource resourceParent = resource.getParent();
-                    hidden = resourceParent != null && new ParentHidingHandler(resourceParent, this.traverseHierarchie).isHidden(holder.name, true);
+                    hidden = resourceParent != null && new ResourceHidingHandler(resourceParent, this.traverseHierarchie).isHidden(holder.name, true);
 
                     // TODO Usually, the parent does not exist if the resource is a NonExistingResource. Ideally, this
                     // common case should be optimised
@@ -306,7 +247,7 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
             boolean isUnderlying = true;
             while (resources.hasNext()) {
                 Resource parentResource = resources.next();
-                final ParentHidingHandler handler = !isUnderlying ? new ParentHidingHandler(parentResource, this.traverseHierarchie) : null;
+                final ResourceHidingHandler handler = !isUnderlying ? new ResourceHidingHandler(parentResource, this.traverseHierarchie) : null;
                 isUnderlying = false;
 
                 // remove the hidden child resources from the underlying resource
