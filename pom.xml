@@ -44,8 +44,8 @@
         <connection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-resourcemerger.git</connection>
         <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/sling-org-apache-sling-resourcemerger.git</developerConnection>
         <url>https://gitbox.apache.org/repos/asf?p=sling-org-apache-sling-resourcemerger.git</url>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <build>
         <plugins>
@@ -137,7 +137,7 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
-             <scope>test</scope>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

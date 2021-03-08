@@ -71,12 +71,9 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
             isParentHiddenForUnderlay = false;
             // evaluate the sling:hideChildren property on the current resource
             final ValueMap properties = resource.getValueMap();
-            final String[] childrenToHideArray = properties.get(MergedResourceConstants.PN_HIDE_CHILDREN, String[].class);
-            if (childrenToHideArray != null) {
-                hidePredicate = new HideItemPredicate(childrenToHideArray, resource.getPath() + "/" + MergedResourceConstants.PN_HIDE_CHILDREN);
-            } else {
-                hidePredicate = null;
-            }
+            final String[] childrenToHideArray = properties.get(MergedResourceConstants.PN_HIDE_CHILDREN, new String[0]);
+            hidePredicate = new HideItemPredicate(childrenToHideArray, resource.getPath() + "/" + MergedResourceConstants.PN_HIDE_CHILDREN);
+            
             // also check on the parent's parent whether that was hiding the parent
             Resource parent = resource.getParent();
             String childResourceName = resource.getName();
@@ -110,7 +107,7 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
          * @return {@code true} if the local/inherited resource should be hidden, otherwise {@code false}
          */
         public boolean isHidden(final String name, boolean isLocalResource) {
-            return isParentHiddenFully || ((!isLocalResource) && isParentHiddenForUnderlay) || (hidePredicate != null && hidePredicate.testItem(name, isLocalResource));
+            return isParentHiddenFully || ((!isLocalResource) && isParentHiddenForUnderlay) || (hidePredicate.testItem(name, isLocalResource));
         }
 
     }

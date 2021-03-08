@@ -37,31 +37,67 @@ public class HideItemPredicate {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HideItemPredicate.class);
 
+    private static class SettingValue {
+        private final String name;
+        private final boolean isNegated;
+
+        public SettingValue(String name, boolean isNegated) {
+            super();
+            this.name = name;
+            this.isNegated = isNegated;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public boolean isNegated() {
+            return isNegated;
+        }
+    }
+
     public HideItemPredicate(String[] settings, String propertyPath) {
         names = new HashSet<>();
         // negated and non-negated values must not be mixed
-        for (String setting : settings) {
-            if (setting.equals("*")) {
+        for (String value : settings) {
+            if (value.equals("*")) {
                 isWildcard = true;
             } else {
-                boolean isNegated = setting.startsWith("!") && !setting.startsWith("!!");
-                if (setting.startsWith("!")) {
-                    setting = setting.substring(1);
-                }
+                SettingValue setting = parseSetting(value);
                 if (isAllowList == null) {
-                    isAllowList = !isNegated;
+                    isAllowList = !setting.isNegated();
                 } else {
-                    if (isAllowList == isNegated) {
+                    if (isAllowList == setting.isNegated) {
                         LOGGER.warn("Negated and non-negated values mixed in {}, skipping value '{}'", propertyPath, setting);
                         continue;
                     }
                 }
-                names.add(setting);
+                names.add(setting.getName());
             }
         }
 
         if (isAllowList == null) {
             isAllowList = true;
+        }
+    }
+
+    static SettingValue parseSetting(String value) {
+        if (!value.startsWith("!")) {
+            return new SettingValue(value, false);
+        } else {
+            // count all leading exclamation marks
+            int index = 0; 
+            for (;index < value.length(); index++) {
+                if (value.charAt(index) != '!') {
+                    break;
+                }
+            }
+            if (index % 2 == 1) { // odd number of exclamation marks -> negated, remove all of them
+                return new SettingValue(value.substring(index), true);
+            } else {
+                // even number of exclamation marks -> non-negated, remove all but the last
+                return new SettingValue(value.substring(index-1), false);
+            }
         }
     }
 
