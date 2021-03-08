@@ -43,6 +43,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.google.common.collect.ImmutableMap;
+
 /**
  * Tests common merging behaviour (independent of actual picker implementation)
  *
@@ -436,5 +438,57 @@ public class CommonMergedResourceProviderTest {
         IteratorIterable<Resource> iterable = new IteratorIterable<Resource>(provider.listChildren(ctx, mergedResource), true);
 
         Assert.assertThat(iterable, Matchers.contains(ResourceMatchers.name("child1"),ResourceMatchers.name("child3"),ResourceMatchers.name("child2")));
+    }
+
+    @Test
+    public void testNodesDefinedInBaseStructureShouldBeReflectedInOverlaidStructureWhenNotExcludedInCombinationWithWildcard() throws PersistenceException {
+        final String title = "title";
+        final String field = "field";
+        final String description = "description";
+
+        MockHelper.create(this.resolver)
+            // Set up the base structure, including a tab that is not desired in the overlaid situation
+            .resource("/apps/base/test")
+            .resource("/apps/base/test/tabs")
+            .resource("/apps/base/test/tabs/undesired-tab")
+            .p(title, "Undesired Tab")
+            .resource("/apps/base/test/tabs/desired-tab")
+            .p(title, "Desired Tab")
+            // Set up a field inside the items node in the desired tab, that should be reflected in the overlaid situation
+            .resource("/apps/base/test/tabs/desired-tab/items")
+            .resource("/apps/base/test/tabs/desired-tab/items/" + field)
+            // Define a property on the field inside the base tab, that should be reflected int he overlaid situation
+            .p(field, field)
+            // Set up the overlaid structure, defining the tabs again
+            .resource("/apps/overlay/test")
+            .resource("/apps/overlay/test/tabs")
+            // Explicitly define that *all* children need to be hidden from the base structure, except for the desired tab
+            .p(MergedResourceConstants.PN_HIDE_CHILDREN, new String[]{"!desired-tab", "*"})
+            .resource("/apps/overlay/test/tabs/desired-tab")
+            .resource("/apps/overlay/test/tabs/desired-tab/items")
+            .resource("/apps/overlay/test/tabs/desired-tab/items/" + field)
+            // Define an additional property on a node inside the desired tab, so that it should end up getting 2 properties
+            .p(description, description)
+            .commit();
+
+        // Ensure that the undesired tab is not found
+        final Resource tabsResource = this.provider.getResource(ctx, "/merged/test/tabs", ResourceContext.EMPTY_CONTEXT, null);
+        Assert.assertNotNull(tabsResource);
+        final IteratorIterable<Resource> tabs = new IteratorIterable<Resource>(this.provider.listChildren(ctx, tabsResource), true);
+        Assert.assertThat(tabs, Matchers.contains(
+            ResourceMatchers.nameAndProps("desired-tab", title, "Desired Tab")
+        ));
+
+        // Ensure that the desired tab also has the newly added description, as well as its original name
+        final Resource desiredTabItemsResource = this.provider.getResource(ctx, "/merged/test/tabs/desired-tab/items", ResourceContext.EMPTY_CONTEXT, null);
+        Assert.assertNotNull(desiredTabItemsResource);
+        final IteratorIterable<Resource> desiredTabItems = new IteratorIterable<Resource>(provider.listChildren(ctx, desiredTabItemsResource), true);
+        Assert.assertThat(desiredTabItems, Matchers.contains(
+            ResourceMatchers.nameAndProps(field, ImmutableMap.<String, Object>builder()
+                .put(field, field)
+                .put(description, description)
+                .build())
+            )
+        );
     }
 }
