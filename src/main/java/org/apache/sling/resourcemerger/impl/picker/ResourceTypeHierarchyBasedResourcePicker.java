@@ -24,32 +24,33 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.ConfigurationPolicy;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.resourcemerger.impl.StubResource;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.ConfigurationPolicy;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Component(name = "org.apache.sling.resourcemerger.picker.overriding",
-        label = "Apache Sling Resource Merger - Resource Type Hierarchy Based Resource Picker",
-    description = "This resource picker delivers merged resources based on the resource type hierarchy (override approach).",
-    metatype = true, policy = ConfigurationPolicy.REQUIRE)
-@Service
-@Properties({
-    @Property(name = MergedResourcePicker2.MERGE_ROOT, value = ResourceTypeHierarchyBasedResourcePicker.DEFAULT_ROOT,
-            label = "Root", description = "Root path at which merged resources will be available."),
-    @Property(name=MergedResourcePicker2.READ_ONLY, boolValue=true,
-    label="Read Only",
-    description="Specifies if the resources are read-only or can be modified."),
-    @Property(name=MergedResourcePicker2.TRAVERSE_PARENT, boolValue=true, propertyPrivate=true)
-})
+@Component(name="org.apache.sling.resourcemerger.picker.overriding", configurationPolicy = ConfigurationPolicy.REQUIRE,
+    property = { MergedResourcePicker2.TRAVERSE_PARENT + ":Boolean=true"})
+@Designate(ocd=ResourceTypeHierarchyBasedResourcePicker.Configuration.class)
 public class ResourceTypeHierarchyBasedResourcePicker implements MergedResourcePicker2 {
 
     public static final String DEFAULT_ROOT = "/mnt/override";
+
+    @ObjectClassDefinition(
+            id = "org.apache.sling.resourcemerger.picker.overriding",
+            name = "Apache Sling Resource Merger - Resource Type Hierarchy Based Resource Picker",
+            description = "This resource picker delivers merged resources based on the resource type hierarchy (override approach).")
+    @interface Configuration {
+        @AttributeDefinition(name = "Root", description = "The mount point of merged resources.")
+        String merge_root() default ResourceTypeHierarchyBasedResourcePicker.DEFAULT_ROOT;
+        @AttributeDefinition(name = "Read Only", description = "Specifies if the resources are read-only or can be modified.")
+        boolean merge_readOnly() default true;
+    }
 
     public List<Resource> pickResources(ResourceResolver resolver, String relativePath, Resource relatedResource) {
         // TODO this method can be optimised by leveraging relatedResource (similar to MergingResourcePicker)

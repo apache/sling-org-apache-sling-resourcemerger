@@ -19,8 +19,7 @@
 package org.apache.sling.resourcemerger.api;
 
 import org.apache.sling.api.resource.Resource;
-
-import aQute.bnd.annotation.ProviderType;
+import org.osgi.annotation.versioning.ProviderType;
 
 /**
  * Service to handle merged resources.

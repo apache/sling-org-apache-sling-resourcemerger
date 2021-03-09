@@ -24,9 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Deactivate;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
@@ -35,91 +32,82 @@ import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
 import org.apache.sling.spi.resource.provider.ResourceProvider;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
-import org.osgi.util.tracker.ServiceTracker;
-import org.osgi.util.tracker.ServiceTrackerCustomizer;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferencePolicy;
 
+/**
+ * Registers all {@link MergedResourcePicker} and {@link MergedResourcePicker2} services as {@link MergingResourceProvider}s.
+ */
+@SuppressWarnings("deprecation")
 @Component
-public class MergedResourcePickerWhiteboard implements ServiceTrackerCustomizer {
-
-    private ServiceTracker tracker;
+public class MergedResourcePickerWhiteboard {
 
     private BundleContext bundleContext;
 
-    private final Map<Long, ServiceRegistration> serviceRegistrations = new ConcurrentHashMap<Long, ServiceRegistration>();
+    private final Map<Long, ServiceRegistration<ResourceProvider<Void>>> resourceProvidersPerPickerServiceId = new ConcurrentHashMap<>();
 
     @Activate
-    protected void activate(final BundleContext bundleContext) throws InvalidSyntaxException {
+    protected void activate(final BundleContext bundleContext) {
         this.bundleContext = bundleContext;
-        tracker = new ServiceTracker(bundleContext, bundleContext.createFilter("(|(objectClass=" + MergedResourcePicker.class.getName() +
-                ")(objectClass=" + MergedResourcePicker2.class.getName() + "))"), this);
-        tracker.open();
     }
 
     @Deactivate
     protected void deactivate() {
-        tracker.close();
+        for (ServiceRegistration<ResourceProvider<Void>> resourceProvider : resourceProvidersPerPickerServiceId.values()) {
+            resourceProvider.unregister();
+        }
     }
 
-    @Override
-    public Object addingService(final ServiceReference reference) {
-        final Object pickerObj = bundleContext.getService(reference);
-        if ( pickerObj != null ) {
-            final String mergeRoot = PropertiesUtil.toString(reference.getProperty(MergedResourcePicker2.MERGE_ROOT), null);
-            if (mergeRoot != null) {
-                boolean readOnly = PropertiesUtil.toBoolean(reference.getProperty(MergedResourcePicker2.READ_ONLY), true);
-                boolean traverseParent = PropertiesUtil.toBoolean(reference.getProperty(MergedResourcePicker2.TRAVERSE_PARENT), false);
+    @Reference(policy = ReferencePolicy.DYNAMIC)
+    public void bindMergedResourcePicker(MergedResourcePicker resourcePicker, Map<String, Object> properties) {
+        registerMergingResourceProvider((resolver, relativePath, relatedResource) -> resourcePicker.pickResources(resolver, relativePath), properties);
+    }
 
-                final MergedResourcePicker2 picker;
-                if ( pickerObj instanceof MergedResourcePicker2 ) {
-                    picker = (MergedResourcePicker2)pickerObj;
-                } else {
-                    final MergedResourcePicker deprecatedPicker = (MergedResourcePicker)pickerObj;
-                    picker = new MergedResourcePicker2() {
+    public void unbindMergedResourcePicker(Map<String, Object> properties) {
+        unregisterMergingResourceProvider(properties);
+    }
 
-                        @Override
-                        public List<Resource> pickResources(ResourceResolver resolver, String relativePath, Resource relatedResource) {
-                            return deprecatedPicker.pickResources(resolver, relativePath);
-                        }
-                    };
-                }
+    @Reference(policy = ReferencePolicy.DYNAMIC)
+    public void bindMergedResourcePicker2(MergedResourcePicker2 resourcePicker, Map<String, Object> properties) {
+        registerMergingResourceProvider(resourcePicker, properties);
+    }
 
-                MergingResourceProvider provider = readOnly ?
-                        new MergingResourceProvider(mergeRoot, picker, true, traverseParent) :
-                        new CRUDMergingResourceProvider(mergeRoot, picker, traverseParent);
+    public void unbindMergedResourcePicker2(Map<String, Object> properties) {
+        unregisterMergingResourceProvider(properties);
+    }
 
-                final Dictionary<Object, Object> props = new Hashtable<Object, Object>();
-                props.put(ResourceProvider.PROPERTY_NAME, readOnly ? "Merging" : "CRUDMerging");
-                props.put(ResourceProvider.PROPERTY_ROOT, mergeRoot);
-                props.put(ResourceProvider.PROPERTY_MODIFIABLE, !readOnly);
-                props.put(ResourceProvider.PROPERTY_AUTHENTICATE, ResourceProvider.AUTHENTICATE_NO);
+    @SuppressWarnings("unchecked")
+    private void registerMergingResourceProvider(MergedResourcePicker2 resourcePicker, Map<String, Object> properties) {
+        final String mergeRoot = (String)properties.getOrDefault(MergedResourcePicker2.MERGE_ROOT, null);
+        if (mergeRoot != null) {
+            boolean readOnly = PropertiesUtil.toBoolean(properties.get(MergedResourcePicker2.READ_ONLY), true);
+            boolean traverseParent = PropertiesUtil.toBoolean(properties.get(MergedResourcePicker2.TRAVERSE_PARENT), false);
 
-                final Long key = (Long) reference.getProperty(Constants.SERVICE_ID);
-                final ServiceRegistration reg = bundleContext.registerService(ResourceProvider.class.getName(), provider, props);
+            ResourceProvider<Void> provider = readOnly ?
+                    new MergingResourceProvider(mergeRoot, resourcePicker, true, traverseParent) :
+                    new CRUDMergingResourceProvider(mergeRoot, resourcePicker, traverseParent);
+            final Dictionary<String, Object> props = new Hashtable<>();
+            props.put(ResourceProvider.PROPERTY_NAME, readOnly ? "Merging" : "CRUDMerging");
+            props.put(ResourceProvider.PROPERTY_ROOT, mergeRoot);
+            props.put(ResourceProvider.PROPERTY_MODIFIABLE, !readOnly);
+            props.put(ResourceProvider.PROPERTY_AUTHENTICATE, ResourceProvider.AUTHENTICATE_NO);
+            final Long key = (Long) properties.get(Constants.SERVICE_ID);
+            final ServiceRegistration<ResourceProvider<Void>> resourceProvider = (ServiceRegistration<ResourceProvider<Void>>)bundleContext.registerService(ResourceProvider.class.getName(), provider, props);
+            resourceProvidersPerPickerServiceId.put(key, resourceProvider);
+        }
+    }
 
-                serviceRegistrations.put(key, reg);
+    private void unregisterMergingResourceProvider(Map<String, Object> properties) {
+        final Long key = (Long) properties.get(Constants.SERVICE_ID);
+        if (key != null) {
+            final ServiceRegistration<ResourceProvider<Void>> resourceProvider = resourceProvidersPerPickerServiceId.get(key);
+            if (resourceProvider != null) {
+                resourceProvider.unregister();
             }
-            return pickerObj;
-        }
-        return null;
-    }
-
-    @Override
-    public void modifiedService(final ServiceReference reference, final Object service) {
-        removedService(reference, service);
-        addingService(reference);
-    }
-
-    @Override
-    public void removedService(final ServiceReference reference, final Object service) {
-        final Long key = (Long) reference.getProperty(Constants.SERVICE_ID);
-        final ServiceRegistration reg = serviceRegistrations.get(key);
-        if ( reg != null ) {
-            reg.unregister();
-            this.bundleContext.ungetService(reference);
         }
     }
-
 }

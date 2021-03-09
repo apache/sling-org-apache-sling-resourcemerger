@@ -23,8 +23,7 @@ import java.util.List;
 import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceProviderFactory;
 import org.apache.sling.api.resource.ResourceResolver;
-
-import aQute.bnd.annotation.ConsumerType;
+import org.osgi.annotation.versioning.ConsumerType;
 
 /**
  * Service interface which can be implemented to define an algorithm used to pick
