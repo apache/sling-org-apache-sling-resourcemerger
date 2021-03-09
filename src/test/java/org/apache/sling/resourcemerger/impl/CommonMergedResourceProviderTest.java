@@ -281,6 +281,28 @@ public class CommonMergedResourceProviderTest {
     }
 
     @Test
+    public void testHidePropertiesWithMultiValue() {
+        ModifiableValueMap properties = base.adaptTo(ModifiableValueMap.class);
+        properties.put("!property1", "frombase");
+        properties.put("!!property2", "frombase");
+        properties.put("!!!property3", "frombase");
+        properties.put(MergedResourceConstants.PN_HIDE_CHILDREN, "some invalid resource");
+        
+        // hide by value
+        ModifiableValueMap overlayProperties = overlay.adaptTo(ModifiableValueMap.class);
+        overlayProperties.put(MergedResourceConstants.PN_HIDE_PROPERTIES, new String[]{"!!property1", "!!!!!!property3"});
+
+        Resource mergedResource = this.provider.getResource(ctx, "/merged", ResourceContext.EMPTY_CONTEXT, null);
+        Map<String, Object> expectedProperties = new HashMap<String, Object>();
+        expectedProperties.put("!!property2", "frombase");
+        // property2 is still exposed
+        Assert.assertThat(mergedResource, ResourceMatchers.props(expectedProperties));
+        // property1 is no longer exposed from overlay nor base, because hiding properties by name also hides local properties
+        Assert.assertThat(mergedResource, Matchers.not(ResourceMatchers.props(Collections.singletonMap("!property1", (Object)"frombase"))));
+        Assert.assertThat(mergedResource, Matchers.not(ResourceMatchers.props(Collections.singletonMap("!!!property3", (Object)"frombase"))));
+    }
+
+    @Test
     public void testOrderOfPartiallyOverwrittenChildren() throws PersistenceException {
         // see https://issues.apache.org/jira/browse/SLING-4915
         // and https://issues.apache.org/jira/browse/SLING-6956

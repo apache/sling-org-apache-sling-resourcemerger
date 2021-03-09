@@ -95,8 +95,8 @@ public class HideItemPredicate {
             if (index % 2 == 1) { // odd number of exclamation marks -> negated, remove all of them
                 return new SettingValue(value.substring(index), true);
             } else {
-                // even number of exclamation marks -> non-negated, remove all but the last
-                return new SettingValue(value.substring(index-1), false);
+                // even number of exclamation marks -> non-negated, remove half of it
+                return new SettingValue(value.substring(index/2), false);
             }
         }
     }
