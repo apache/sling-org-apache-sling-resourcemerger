@@ -69,7 +69,7 @@ public class SearchPathBasedResourcePicker implements MergedResourcePicker2, Res
             }
         }
 
-        final List<Resource> resources = new ArrayList<Resource>();
+        final List<Resource> resources = new ArrayList<>();
         final String[] searchPaths = resolver.getSearchPath();
         for (int i = searchPaths.length - 1; i >= 0; i--) {
             final String basePath = searchPaths[i];

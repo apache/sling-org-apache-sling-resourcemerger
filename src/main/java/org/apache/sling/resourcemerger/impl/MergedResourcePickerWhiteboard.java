@@ -64,14 +64,7 @@ public class MergedResourcePickerWhiteboard {
 
     @Reference(policy = ReferencePolicy.DYNAMIC)
     public void bindMergedResourcePicker(MergedResourcePicker resourcePicker, Map<String, Object> properties) {
-        final MergedResourcePicker2 resourcePicker2 = new MergedResourcePicker2() {
-
-            @Override
-            public List<Resource> pickResources(ResourceResolver resolver, String relativePath, Resource relatedResource) {
-                return resourcePicker.pickResources(resolver, relativePath);
-            }
-        };
-        registerMergingResourceProvider(resourcePicker2, properties);
+        registerMergingResourceProvider((resolver, relativePath, relatedResource) -> resourcePicker.pickResources(resolver, relativePath), properties);
     }
 
     public void unbindMergedResourcePicker(Map<String, Object> properties) {
