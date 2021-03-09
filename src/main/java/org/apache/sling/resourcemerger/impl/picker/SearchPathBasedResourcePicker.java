@@ -20,43 +20,39 @@ package org.apache.sling.resourcemerger.impl.picker;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.felix.scr.annotations.Activate;
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Properties;
-import org.apache.felix.scr.annotations.Property;
-import org.apache.felix.scr.annotations.Service;
 import org.apache.sling.api.resource.NonExistingResource;
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceProvider;
 import org.apache.sling.api.resource.ResourceResolver;
-import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.resourcemerger.api.ResourceMergerService;
 import org.apache.sling.resourcemerger.impl.MergedResource;
 import org.apache.sling.resourcemerger.impl.MergedResourceConstants;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.metatype.annotations.AttributeDefinition;
+import org.osgi.service.metatype.annotations.Designate;
+import org.osgi.service.metatype.annotations.ObjectClassDefinition;
 
-@Component(name="org.apache.sling.resourcemerger.impl.MergedResourceProviderFactory",
-           label = "Apache Sling Resource Merger - Search Path Based Resource Picker",
-           description = "This resource picker delivers merged resources based on the search paths (overlay approach).",
-           metatype=true)
-@Service(value={MergedResourcePicker2.class, ResourceMergerService.class})
-@Properties({
-    @Property(name=MergedResourcePicker2.MERGE_ROOT, value=SearchPathBasedResourcePicker.DEFAULT_ROOT,
-            label="Root",
-            description="The mount point of merged resources"),
-    @Property(name=MergedResourcePicker2.READ_ONLY, boolValue=true,
-    label="Read Only",
-    description="Specifies if the resources are read-only or can be modified.")
-
-})
+@Component(name="org.apache.sling.resourcemerger.impl.MergedResourceProviderFactory")
+@Designate(ocd=SearchPathBasedResourcePicker.Configuration.class)
 /**
  * The <code>SearchPathBasedResourcePicker</code> delivers merged resources based on the resource resolver's search path.
  */
 public class SearchPathBasedResourcePicker implements MergedResourcePicker2, ResourceMergerService {
 
     public static final String DEFAULT_ROOT = "/mnt/overlay";
+
+    @ObjectClassDefinition(
+            id = "org.apache.sling.resourcemerger.impl.MergedResourceProviderFactory",
+            name = "Apache Sling Resource Merger - Search Path Based Resource Picker",
+            description = "This resource picker delivers merged resources based on the search paths (overlay approach).")
+    @interface Configuration {
+        @AttributeDefinition(name = "Root", description = "The mount point of merged resources.")
+        String merge_root() default SearchPathBasedResourcePicker.DEFAULT_ROOT;
+        @AttributeDefinition(name = "Read Only", description = "Specifies if the resources are read-only or can be modified.")
+        boolean merge_readOnly() default true;
+    }
 
     private String mergeRootPath;
 
@@ -73,7 +69,7 @@ public class SearchPathBasedResourcePicker implements MergedResourcePicker2, Res
             }
         }
 
-        final List<Resource> resources = new ArrayList<Resource>();
+        final List<Resource> resources = new ArrayList<>();
         final String[] searchPaths = resolver.getSearchPath();
         for (int i = searchPaths.length - 1; i >= 0; i--) {
             final String basePath = searchPaths[i];
@@ -182,7 +178,7 @@ public class SearchPathBasedResourcePicker implements MergedResourcePicker2, Res
     }
 
     @Activate
-    protected void configure(final Map<String, Object> properties) {
-        mergeRootPath = PropertiesUtil.toString(properties.get(ResourceProvider.ROOTS), DEFAULT_ROOT);
+    protected void configure(final Configuration configuration) {
+        mergeRootPath = configuration.merge_root();
     }
 }
