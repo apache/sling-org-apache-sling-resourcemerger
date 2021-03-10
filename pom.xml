@@ -81,6 +81,11 @@
             <version>2.2.0</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- Testing -->
         <dependency>
             <groupId>junit</groupId>

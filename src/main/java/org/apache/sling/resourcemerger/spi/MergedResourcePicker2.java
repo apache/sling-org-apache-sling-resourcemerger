@@ -21,13 +21,13 @@ package org.apache.sling.resourcemerger.spi;
 import java.util.List;
 
 import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceProviderFactory;
 import org.apache.sling.api.resource.ResourceResolver;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.annotation.versioning.ConsumerType;
 
 /**
  * Service interface which can be implemented to define an algorithm used to pick
- * resources to be merged. For each picker service, a separate {@link ResourceProviderFactory}
+ * resources to be merged. For each picker service, a separate {@link org.apache.sling.spi.resource.provider.ResourceProvider}
  * will be exposed at the MERGE_ROOT of the picker.
  *
  * @since 1.2
@@ -70,5 +70,5 @@ public interface MergedResourcePicker2 {
      * @param relatedResource an optional resource which is related to the given path (always the parent resource or {@code null})
      * @return a List of Resource objects
      */
-    List<Resource> pickResources(ResourceResolver resolver, String relativePath, Resource relatedResource);
+    @NotNull List<@NotNull Resource> pickResources(@NotNull ResourceResolver resolver, @NotNull String relativePath, Resource relatedResource);
 }

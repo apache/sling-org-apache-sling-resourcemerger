@@ -47,7 +47,7 @@ public class CRUDMergingResourceProvider
 
     private static final class ExtendedResourceHolder {
         public final String name;
-        public final List<Resource> resources = new ArrayList<Resource>();
+        public final List<Resource> resources = new ArrayList<>();
         public int count;
         public String highestResourcePath;
 
@@ -119,6 +119,9 @@ public class CRUDMergingResourceProvider
             final Resource hidingResource = resolver.getResource(holder.highestResourcePath);
             if ( hidingResource != null ) {
                 final ModifiableValueMap mvm = hidingResource.adaptTo(ModifiableValueMap.class);
+                if (mvm == null) {
+                    throw new IllegalStateException("Could not get modifiable value map from resource " + hidingResource.getPath());
+                }
                 mvm.remove(MergedResourceConstants.PN_HIDE_RESOURCE);
                 mvm.putAll(properties);
             }
@@ -151,7 +154,7 @@ public class CRUDMergingResourceProvider
             // create overlay resource which is hiding the other
             final String createPath = holder.highestResourcePath;
             final Resource parentResource = ResourceUtil.getOrCreateResource(resolver, ResourceUtil.getParent(createPath), (String)null, null, false);
-            final Map<String, Object> properties = new HashMap<String, Object>();
+            final Map<String, Object> properties = new HashMap<>();
             properties.put(MergedResourceConstants.PN_HIDE_RESOURCE, Boolean.TRUE);
             resolver.create(parentResource, ResourceUtil.getName(createPath), properties);
         }

@@ -19,6 +19,8 @@
 package org.apache.sling.resourcemerger.api;
 
 import org.apache.sling.api.resource.Resource;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.osgi.annotation.versioning.ProviderType;
 
 /**
@@ -36,7 +38,7 @@ public interface ResourceMergerService {
      * @return Returns the merged resource path
      * @throws IllegalArgumentException if relativePath is <code>null</code> or absolute
      */
-    String getMergedResourcePath(String relativePath);
+    @NotNull String getMergedResourcePath(String relativePath);
 
     /**
      * Returns a merged resource if the provided resource is from one of the search paths
@@ -46,7 +48,7 @@ public interface ResourceMergerService {
      * @param resource The resource
      * @return Returns the merged resource or <code>null</code>
      */
-    Resource getMergedResource(Resource resource);
+    @Nullable Resource getMergedResource(Resource resource);
 
     /**
      * Returns <code>true</code> if the provided {@link Resource} is a merged resource.
@@ -72,5 +74,5 @@ public interface ResourceMergerService {
      *                                  is not within the space of the merged resources.
      * @since 1.1
      */
-    String getResourcePath(String searchPath, String mergedResourcePath);
+    @NotNull String getResourcePath(@NotNull String searchPath, @NotNull String mergedResourcePath);
 }
