@@ -72,7 +72,7 @@ public class CRUDMergedResource extends MergedResource {
     public <AdapterType> AdapterType adaptTo(final Class<AdapterType> type) {
         if (type == ModifiableValueMap.class) {
             final Iterator<@NotNull Resource> iter = this.picker.pickResources(this.getResourceResolver(), this.relativePath, null).iterator();
-            @NotNull Resource highestRsrc = null;
+            Resource highestRsrc = null;
             while ( iter.hasNext() ) {
                 highestRsrc = iter.next();
             }
