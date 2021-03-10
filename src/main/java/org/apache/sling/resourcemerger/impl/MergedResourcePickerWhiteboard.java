@@ -37,6 +37,7 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
 
 /**
@@ -62,7 +63,7 @@ public class MergedResourcePickerWhiteboard {
         }
     }
 
-    @Reference(policy = ReferencePolicy.DYNAMIC)
+    @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.MULTIPLE)
     public void bindMergedResourcePicker(MergedResourcePicker resourcePicker, Map<String, Object> properties) {
         registerMergingResourceProvider((resolver, relativePath, relatedResource) -> resourcePicker.pickResources(resolver, relativePath), properties);
     }
@@ -71,7 +72,7 @@ public class MergedResourcePickerWhiteboard {
         unregisterMergingResourceProvider(properties);
     }
 
-    @Reference(policy = ReferencePolicy.DYNAMIC)
+    @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.MULTIPLE)
     public void bindMergedResourcePicker2(MergedResourcePicker2 resourcePicker, Map<String, Object> properties) {
         registerMergingResourceProvider(resourcePicker, properties);
     }
