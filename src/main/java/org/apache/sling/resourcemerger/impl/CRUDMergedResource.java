@@ -34,6 +34,7 @@ import org.apache.sling.api.resource.ValueMap;
 import org.apache.sling.api.wrappers.DeepReadValueMapDecorator;
 import org.apache.sling.api.wrappers.ValueMapDecorator;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * {@inheritDoc}
@@ -70,8 +71,8 @@ public class CRUDMergedResource extends MergedResource {
     @SuppressWarnings("unchecked")
     public <AdapterType> AdapterType adaptTo(final Class<AdapterType> type) {
         if (type == ModifiableValueMap.class) {
-            final Iterator<Resource> iter = this.picker.pickResources(this.getResourceResolver(), this.relativePath, null).iterator();
-            Resource highestRsrc = null;
+            final Iterator<@NotNull Resource> iter = this.picker.pickResources(this.getResourceResolver(), this.relativePath, null).iterator();
+            @NotNull Resource highestRsrc = null;
             while ( iter.hasNext() ) {
                 highestRsrc = iter.next();
             }
@@ -80,7 +81,7 @@ public class CRUDMergedResource extends MergedResource {
 
                 final Resource copyResource = this.getResourceResolver().getResource(paths[paths.length - 1]);
                 try {
-                    final Resource newResource = ResourceUtil.getOrCreateResource(this.getResourceResolver(), highestRsrc.getPath(), copyResource.getResourceType(), null, false);
+                    final @NotNull Resource newResource = ResourceUtil.getOrCreateResource(this.getResourceResolver(), highestRsrc.getPath(), copyResource.getResourceType(), null, false);
                     final ModifiableValueMap target = newResource.adaptTo(ModifiableValueMap.class);
                     if ( target != null ) {
                         return (AdapterType)new ModifiableProperties(this, target);
