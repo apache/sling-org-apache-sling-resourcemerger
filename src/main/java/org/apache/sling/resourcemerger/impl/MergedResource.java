@@ -52,7 +52,7 @@ public class MergedResource extends AbstractResource {
     private final ValueMap properties;
 
     /** Resources which are merged together. */
-    private final List<Resource> mappedResources;
+    private final List<Resource> mergedResources;
 
     /**
      * Constructor
@@ -60,44 +60,64 @@ public class MergedResource extends AbstractResource {
      * @param resolver      Resource resolver
      * @param mergeRootPath   Merge root path
      * @param relativePath    Relative path
-     * @param mappedResources List of physical mapped resources' paths
+     * @param mergedResources List of physical merged resources
+     * @param valueMaps List of value maps for the merged resources
      */
     MergedResource(final ResourceResolver resolver,
                    final String mergeRootPath,
                    final String relativePath,
-                   final List<Resource> mappedResources,
+                   final List<Resource> mergedResources,
                    final List<ValueMap> valueMaps) {
         this.resolver = resolver;
         this.path = (relativePath.length() == 0 ? mergeRootPath : mergeRootPath + "/" + relativePath);
-        this.mappedResources = mappedResources;
+        this.mergedResources = mergedResources;
         this.properties = new DeepReadValueMapDecorator(this, new MergedValueMap(valueMaps));
-        // get resource type
-        final String slingPropRT = this.properties.get(ResourceResolver.PROPERTY_RESOURCE_TYPE, String.class);
-        String rt = slingPropRT;
-        if (rt == null) {
-            rt = relativePath.length() == 0 ? "/" : relativePath;
-        }
-        // use the resource type of the last resource in the set that provides one
-        for(final Resource rsrc : mappedResources) {
-            final String value = rsrc.getResourceType();
-            if ( value != null ) {
-                rt = value;
-            }
-        }
-        this.resourceType = rt;
-        if ( !rt.equals(slingPropRT) ) {
-            this.resourceSuperType = slingPropRT;
+
+        this.resourceType = detectResourceType(relativePath);
+        this.resourceSuperType = detectResourceSuperType();
+        this.properties.put(ResourceResolver.PROPERTY_RESOURCE_TYPE, this.resourceType);
+        if ( this.resourceSuperType == null ) {
+            this.properties.remove("sling:resourceSuperType");
         } else {
-            this.resourceSuperType = null;
+            this.properties.put("sling:resourceSuperType", this.resourceSuperType);
         }
+
         metadata.put(MergedResourceConstants.METADATA_FLAG, true);
-        final String[] resourcePaths = new String[mappedResources.size()];
+        final String[] resourcePaths = new String[mergedResources.size()];
         int i = 0;
-        for(final Resource rsrc : mappedResources) {
+        for(final Resource rsrc : mergedResources) {
             resourcePaths[i] = rsrc.getPath();
             i++;
         }
         metadata.put(MergedResourceConstants.METADATA_RESOURCES, resourcePaths);
+    }
+
+    /**
+     * Detect the resource type by returning the resource type of the last resource.
+     * Falls back for testing or invalid resource implementations to the relative path
+     * @param relativePath The relative path
+     * @return The resource type
+     */
+    private String detectResourceType(final String relativePath) {
+        String type = this.mergedResources.get(this.mergedResources.size() - 1).getResourceType();
+        if ( type == null ) {
+            type = relativePath.length() == 0 ? "/" : relativePath;
+        }
+        return type;
+    }
+
+    /**
+     * Detect the resource super type by returning the value of a resource type property
+     * if it is not equal to the detect resource type.
+     * @param valueMaps The value maps of the merged resources
+     * @return The resource super type or {@code null}
+     */
+    private String detectResourceSuperType() {
+        final String type = this.properties.get(ResourceResolver.PROPERTY_RESOURCE_TYPE, String.class);
+        if ( type != null && !type.equals(this.resourceType)) {
+            return type;
+        }
+        return null;
     }
 
     /**
@@ -135,8 +155,8 @@ public class MergedResource extends AbstractResource {
         return resolver;
     }
 
-    public List<Resource> getMappedResources() {
-        return mappedResources;
+    public List<Resource> getMergedResources() {
+        return this.mergedResources;
     }
 
     /**

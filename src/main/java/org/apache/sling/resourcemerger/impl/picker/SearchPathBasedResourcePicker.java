@@ -61,7 +61,7 @@ public class SearchPathBasedResourcePicker implements MergedResourcePicker2, Res
                                         final Resource relatedResource) {
         List<Resource> relatedMappedResources = null;
         if (relatedResource instanceof MergedResource) {
-            relatedMappedResources = ((MergedResource) relatedResource).getMappedResources();
+            relatedMappedResources = ((MergedResource) relatedResource).getMergedResources();
 
             // Check if the path is the same
             if (relatedResource.getPath().equals(mergeRootPath + '/' + relativePath)) {

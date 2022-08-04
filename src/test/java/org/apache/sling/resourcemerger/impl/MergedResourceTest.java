@@ -64,10 +64,12 @@ public class MergedResourceTest {
         resources.add(r2);
         resources.add(r3);
 
-        final MergedResource mr = new MergedResource(null, "/a", "a", resources, Collections.EMPTY_LIST);
+        final MergedResource mr = new MergedResource(null, "/a", "a", resources, Collections.emptyList());
 
         assertEquals("c", mr.getResourceType());
         assertNull(mr.getResourceSuperType());
+        assertEquals("c", mr.getValueMap().get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
+        assertNull(mr.getValueMap().get("sling:resourceSuperType"));
     }
 
     @Test public void testResourceTypeByValueMap() throws Exception {
@@ -92,6 +94,8 @@ public class MergedResourceTest {
 
         assertEquals("vmc", mr.getResourceType());
         assertNull(mr.getResourceSuperType());
+        assertEquals("vmc", mr.getValueMap().get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
+        assertNull(mr.getValueMap().get("sling:resourceSuperType"));
     }
 
     @Test public void testResourceTypeMixed() throws Exception {
@@ -134,11 +138,15 @@ public class MergedResourceTest {
 
         assertEquals("c", mr1.getResourceType());
         assertEquals("vmc", mr1.getResourceSuperType());
+        assertEquals("c", mr1.getValueMap().get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
+        assertEquals("vmc", mr1.getValueMap().get("sling:resourceSuperType"));
 
         final MergedResource mr2 = new MergedResource(null, "/a", "a", resources, Collections.singletonList(vm2));
 
         assertEquals("c", mr2.getResourceType());
         assertEquals("vmb", mr2.getResourceSuperType());
+        assertEquals("c", mr2.getValueMap().get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
+        assertEquals("vmb", mr2.getValueMap().get("sling:resourceSuperType"));
     }
     
     @Test public void testToString() throws Exception {
@@ -157,4 +165,32 @@ public class MergedResourceTest {
 
         assertTrue(mr.toString().contains("/innerResourcePath"));
     }
+
+    @Test public void testResourceSuperType() throws Exception {
+        final ValueMap vm1 = new ValueMapDecorator(Collections.singletonMap(ResourceResolver.PROPERTY_RESOURCE_TYPE, (Object)"vma"));
+        final MockResource r1 = new MockResource("/a", vm1, null);
+        final ValueMap vm2 = new ValueMapDecorator(Collections.singletonMap(ResourceResolver.PROPERTY_RESOURCE_TYPE, (Object)"vmb"));
+        final MockResource r2 = new MockResource("/b", vm2, null);
+        final ValueMap vm3 = new ValueMapDecorator(Collections.singletonMap(ResourceResolver.PROPERTY_RESOURCE_TYPE, (Object)"vmc"));
+        final MockResource r3 = new MockResource("/c", vm3, null);
+
+        final List<Resource> resources = new ArrayList<Resource>();
+        resources.add(r1);
+        resources.add(r2);
+        resources.add(r3);
+
+        final List<ValueMap> valueMaps = new ArrayList<ValueMap>();
+        valueMaps.add(vm1);
+        valueMaps.add(vm2);
+        // we fake the scenario by using a different value map
+        valueMaps.add(new ValueMapDecorator(Collections.singletonMap(ResourceResolver.PROPERTY_RESOURCE_TYPE, (Object)"super")));
+
+        final MergedResource mr = new MergedResource(null, "/a", "a", resources, valueMaps);
+
+        assertEquals("vmc", mr.getResourceType());
+        assertEquals("super", mr.getResourceSuperType());
+        assertEquals("vmc", mr.getValueMap().get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
+        assertEquals("super", mr.getValueMap().get("sling:resourceSuperType"));
+    }
+
 }
