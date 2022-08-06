@@ -152,10 +152,11 @@ public class MergedResourceProviderForSearchPathBasedPickerTest {
         final Resource rsrcA1 = this.provider.getResource(ctx, "/merged/a/1", ResourceContext.EMPTY_CONTEXT, null);
         final ValueMap vm = rsrcA1.adaptTo(ValueMap.class);
         assertNotNull(vm);
-        assertEquals(3, vm.size());
+        assertEquals(4, vm.size());
         assertEquals("1", vm.get("a"));
         assertEquals("2", vm.get("b"));
         assertEquals("2", vm.get("c"));
+        assertEquals("a/1", vm.get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
     }
 
     @Test public void testResourceType() {
@@ -174,20 +175,22 @@ public class MergedResourceProviderForSearchPathBasedPickerTest {
         final ValueMap vm = rsrcA3.adaptTo(ValueMap.class);
         assertNotNull(vm);
         // only the properties from the underlying resource should have been cleared (i.e. the ones from /libs)
-        assertEquals(3, vm.size());
+        assertEquals(4, vm.size());
         assertEquals("2", vm.get("e"));
         assertEquals("x", vm.get("b"));
         assertEquals("1", vm.get("d"));
+        assertEquals("a/3", vm.get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
     }
 
     @Test public void testHideProperties() {
         final Resource rsrcA4 = this.provider.getResource(ctx, "/merged/a/4", ResourceContext.EMPTY_CONTEXT, null);
         final ValueMap vm = rsrcA4.adaptTo(ValueMap.class);
         assertNotNull(vm);
-        assertEquals(3, vm.size());
+        assertEquals(4, vm.size());
         assertEquals("1", vm.get("d"));
         assertEquals("2", vm.get("e"));
         assertEquals("x", vm.get("b"));
+        assertEquals("a/4", vm.get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
     }
 
     @Test public void testSimpleCreateAndDelete() throws PersistenceException {
@@ -339,7 +342,7 @@ public class MergedResourceProviderForSearchPathBasedPickerTest {
             assertTrue(resource instanceof MergedResource);
 
             MergedResource mergedResource = (MergedResource) resource;
-            List<Resource> mappedResources = mergedResource.getMappedResources();
+            List<Resource> mappedResources = mergedResource.getMergedResources();
             assertEquals(2, mappedResources.size());
             assertEquals(mappedResources.get(0).getPath(), "/libs/b/c/d");
             assertEquals(mappedResources.get(1).getPath(), "/apps/b/c/d");

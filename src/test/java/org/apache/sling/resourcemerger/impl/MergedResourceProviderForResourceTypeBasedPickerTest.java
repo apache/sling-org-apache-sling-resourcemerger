@@ -118,9 +118,10 @@ public class MergedResourceProviderForResourceTypeBasedPickerTest {
         final Resource rsrcA2 = this.provider.getResource(ctx, "/override/apps/a/2/c", ResourceContext.EMPTY_CONTEXT, null);
         final ValueMap vm = rsrcA2.adaptTo(ValueMap.class);
         assertNotNull(vm);
-        assertEquals(2, vm.size());
+        assertEquals(3, vm.size());
         assertEquals("c", vm.get("1"));
         assertEquals("b", vm.get("2"));
+        assertEquals("apps/a/2/c", vm.get(ResourceResolver.PROPERTY_RESOURCE_TYPE));
     }
 
     @Test
