@@ -18,7 +18,9 @@
  */
 package org.apache.sling.resourcemerger.impl;
 
+import java.util.Arrays;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,7 @@ import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
 import org.apache.sling.spi.resource.provider.ResourceProvider;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -64,7 +67,11 @@ public class MergedResourcePickerWhiteboard {
     }
 
     @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.MULTIPLE)
-    public void bindMergedResourcePicker(MergedResourcePicker resourcePicker, Map<String, Object> properties) {
+    public void bindMergedResourcePicker(MergedResourcePicker resourcePicker,
+                                         ServiceReference<MergedResourcePicker> reference) {
+        final Map<String, Object> properties = new HashMap<String, Object>();
+        Arrays.stream(reference.getPropertyKeys()).forEach(property -> properties.put(property,
+                reference.getProperty(property)));
         registerMergingResourceProvider((resolver, relativePath, relatedResource) -> resourcePicker.pickResources(resolver, relativePath), properties);
     }
 
@@ -73,7 +80,11 @@ public class MergedResourcePickerWhiteboard {
     }
 
     @Reference(policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.MULTIPLE)
-    public void bindMergedResourcePicker2(MergedResourcePicker2 resourcePicker, Map<String, Object> properties) {
+    public void bindMergedResourcePicker2(MergedResourcePicker2 resourcePicker,
+                                          final ServiceReference<MergedResourcePicker2> reference) {
+        final Map<String, Object> properties = new HashMap<String, Object>();
+        Arrays.stream(reference.getPropertyKeys()).forEach(property -> properties.put(property,
+                reference.getProperty(property)));
         registerMergingResourceProvider(resourcePicker, properties);
     }
 
