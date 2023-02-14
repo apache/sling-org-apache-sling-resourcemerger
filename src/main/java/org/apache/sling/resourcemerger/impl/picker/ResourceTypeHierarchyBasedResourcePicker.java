@@ -102,7 +102,10 @@ public class ResourceTypeHierarchyBasedResourcePicker implements MergedResourceP
 
     @Activate
     protected void activate(final Configuration config) {
-
+        // Added an empty activate method to populate the component properties
+        // from the component property types methods with defaults
+        // See - SLING-11773 and
+        // https://docs.osgi.org/specification/osgi.cmpn/8.0.0/service.component.html#service.component-ordering.generated.properties
     }
 
     private void findInheritanceRoot(final Resource target, final InheritanceRootInfo info) {
