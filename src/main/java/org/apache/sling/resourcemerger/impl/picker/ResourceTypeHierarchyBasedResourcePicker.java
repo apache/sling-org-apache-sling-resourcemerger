@@ -28,6 +28,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.resourcemerger.impl.StubResource;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
@@ -97,6 +98,14 @@ public class ResourceTypeHierarchyBasedResourcePicker implements MergedResourceP
         Collections.reverse(resources);
 
         return resources;
+    }
+
+    @Activate
+    protected void activate(final Configuration config) {
+        // Added an empty activate method to populate the component properties
+        // from the component property types methods with defaults
+        // See - SLING-11773 and
+        // https://docs.osgi.org/specification/osgi.cmpn/8.0.0/service.component.html#service.component-ordering.generated.properties
     }
 
     private void findInheritanceRoot(final Resource target, final InheritanceRootInfo info) {
