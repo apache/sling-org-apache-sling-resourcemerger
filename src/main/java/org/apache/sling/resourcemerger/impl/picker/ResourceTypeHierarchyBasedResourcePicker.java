@@ -28,6 +28,7 @@ import org.apache.sling.api.resource.Resource;
 import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.resourcemerger.impl.StubResource;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
 import org.osgi.service.metatype.annotations.AttributeDefinition;
@@ -50,6 +51,12 @@ public class ResourceTypeHierarchyBasedResourcePicker implements MergedResourceP
         String merge_root() default ResourceTypeHierarchyBasedResourcePicker.DEFAULT_ROOT;
         @AttributeDefinition(name = "Read Only", description = "Specifies if the resources are read-only or can be modified.")
         boolean merge_readOnly() default true;
+    }
+
+    @Activate
+    private void activate(Configuration configuration) {
+        // empty for now, required to correctly allow OSGi configurations without values to bind to this component,
+        // in order to activate it with default values
     }
 
     public List<Resource> pickResources(ResourceResolver resolver, String relativePath, Resource relatedResource) {
