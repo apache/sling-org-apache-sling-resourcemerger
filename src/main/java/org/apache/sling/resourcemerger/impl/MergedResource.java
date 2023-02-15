@@ -75,12 +75,6 @@ public class MergedResource extends AbstractResource {
 
         this.resourceType = detectResourceType(relativePath);
         this.resourceSuperType = detectResourceSuperType();
-        this.properties.put(ResourceResolver.PROPERTY_RESOURCE_TYPE, this.resourceType);
-        if ( this.resourceSuperType == null ) {
-            this.properties.remove("sling:resourceSuperType");
-        } else {
-            this.properties.put("sling:resourceSuperType", this.resourceSuperType);
-        }
 
         metadata.put(MergedResourceConstants.METADATA_FLAG, true);
         final String[] resourcePaths = new String[mergedResources.size()];
