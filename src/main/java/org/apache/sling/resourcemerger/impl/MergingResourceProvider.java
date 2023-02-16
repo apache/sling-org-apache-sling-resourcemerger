@@ -30,6 +30,8 @@ import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
 import org.apache.sling.spi.resource.provider.ResolveContext;
 import org.apache.sling.spi.resource.provider.ResourceContext;
 import org.apache.sling.spi.resource.provider.ResourceProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MergingResourceProvider extends ResourceProvider<Void> {
 
@@ -40,6 +42,8 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
     private final boolean readOnly;
 
     protected final boolean traverseHierarchie;
+
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     MergingResourceProvider(final String mergeRootPath,
             final MergedResourcePicker2 picker,
@@ -163,7 +167,16 @@ public class MergingResourceProvider extends ResourceProvider<Void> {
      */
     protected String getRelativePath(String path) {
         if (path.startsWith(mergeRootPath)) {
+
             path = path.substring(mergeRootPath.length());
+
+            // multiple merge root paths at beginning should not be expected
+            // and can cause high cpu utilization, see SLING-11776
+            if (path.startsWith(mergeRootPath)) {
+                logger.debug("Multiple merge root path {} found at beginning of path {}", mergeRootPath, path);
+                return null;
+            }
+
             if (path.length() == 0) {
                 return path;
             } else if (path.charAt(0) == '/') {
