@@ -20,12 +20,9 @@ package org.apache.sling.resourcemerger.impl;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.sling.api.resource.Resource;
-import org.apache.sling.api.resource.ResourceResolver;
 import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
@@ -59,7 +56,11 @@ public class MergedResourcePickerWhiteboard {
     @Deactivate
     protected void deactivate() {
         for (ServiceRegistration<ResourceProvider<Void>> resourceProvider : resourceProvidersPerPickerServiceId.values()) {
-            resourceProvider.unregister();
+            try {
+                resourceProvider.unregister();
+            } catch ( final IllegalStateException ise ) {
+                // we ignore this as the service might already be gone
+            }
         }
     }
 
@@ -107,7 +108,11 @@ public class MergedResourcePickerWhiteboard {
         if (key != null) {
             final ServiceRegistration<ResourceProvider<Void>> resourceProvider = resourceProvidersPerPickerServiceId.get(key);
             if (resourceProvider != null) {
-                resourceProvider.unregister();
+                try {
+                    resourceProvider.unregister();
+                } catch ( final IllegalStateException ise ) {
+                    // we ignore this as the service might already be gone
+                }
             }
         }
     }
