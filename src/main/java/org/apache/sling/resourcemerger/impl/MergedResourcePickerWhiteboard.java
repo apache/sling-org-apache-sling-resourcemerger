@@ -27,6 +27,7 @@ import org.apache.sling.commons.osgi.PropertiesUtil;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker;
 import org.apache.sling.resourcemerger.spi.MergedResourcePicker2;
 import org.apache.sling.spi.resource.provider.ResourceProvider;
+import org.jetbrains.annotations.NotNull;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.framework.ServiceRegistration;
@@ -44,12 +45,12 @@ import org.osgi.service.component.annotations.ReferencePolicy;
 @Component
 public class MergedResourcePickerWhiteboard {
 
-    private BundleContext bundleContext;
+    private final @NotNull BundleContext bundleContext;
 
     private final Map<Long, ServiceRegistration<ResourceProvider<Void>>> resourceProvidersPerPickerServiceId = new ConcurrentHashMap<>();
 
     @Activate
-    protected void activate(final BundleContext bundleContext) {
+    public MergedResourcePickerWhiteboard(final @NotNull BundleContext bundleContext) {
         this.bundleContext = bundleContext;
     }
 
