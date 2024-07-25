@@ -513,4 +513,28 @@ public class CommonMergedResourceProviderTest {
             )
         );
     }
+
+    @Test
+    public void x() throws PersistenceException {
+        MockHelper.create(this.resolver)
+                // Set up the base structure, including a tab that is not desired in the overlaid situation
+                .resource("/apps/base/test")
+                .resource("/apps/base/test/tabs")
+                .resource("/apps/base/test/tabs/basic")
+                .resource("/apps/base/test/tabs/advanced")
+                .resource("/apps/overlay/test")
+                .resource("/apps/overlay/test/tabs")
+                .p(MergedResourceConstants.PN_HIDE_CHILDREN, new String[]{"!advanced", "*"})
+                .resource("/apps/overlay/test/tabs/expert")
+                .commit();
+
+        // Ensure that the undesired tab is not found
+        final Resource tabsResource = this.provider.getResource(ctx, "/merged/test/tabs", ResourceContext.EMPTY_CONTEXT, null);
+        Assert.assertNotNull(tabsResource);
+        final IteratorIterable<Resource> tabs = new IteratorIterable<Resource>(this.provider.listChildren(ctx, tabsResource), true);
+        Assert.assertThat(tabs, Matchers.contains(
+                ResourceMatchers.name("advanced"),
+                ResourceMatchers.name("expert")
+        ));
+    }
 }
